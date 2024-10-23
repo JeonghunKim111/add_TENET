@@ -61,7 +61,6 @@ void DataflowAnalysis(
 	}
 #endif
 
-
 	int ingress_delay = df.GetIngressDelay(isl_union_map_copy(space_time_to_neighbor));
 	int egress_delay = df.GetEgressDelay(isl_union_map_copy(space_time_to_neighbor));
 	int computation_delay = df.GetComputationDelay();
@@ -71,6 +70,8 @@ void DataflowAnalysis(
 	double avg_dsize = df.GetAverageActivePENum();
 	fprintf(stdout, "Active PE Num: %d; Average: %.2f\n", dsize, avg_dsize);
 
+	int energy = df.GetEnergy(isl_union_map_copy(space_time_to_neighbor)); // new!
+	fprintf(stdout, "Energy: %d\n", energy); //new!
 	isl_union_map_free(space_time_to_neighbor);
 }
 
