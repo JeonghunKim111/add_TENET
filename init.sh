@@ -4,8 +4,8 @@
 #  the details can also be found at:           #
 #  https://repo.or.cz/w/barvinok.git           #
 ################################################
-echo "Apt Install gmp version=10"
-sudo apt-get install libgmp10-dev > /dev/null
+#echo "Apt Install gmp version=10"
+#sudo apt-get install libgmp10-dev > /dev/null
 
 echo "------------------------------------"
 
