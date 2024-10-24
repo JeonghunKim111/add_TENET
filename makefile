@@ -8,7 +8,7 @@ STD := -std=c++17
 
 SOURCES := $(shell find $(SRCDIR) -type f -name *.cpp)
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.cpp=.o))
-LIB_DIR = external/lib
+LIB_DIR = /home/intern_gs13022/add_TENET/external/lib
 INCLUDE_DIR = external/include
 LIB := -lbarvinok -lisl -lntl -lpolylibgmp -lgmp
 INC := -I include -I . -I ${INCLUDE_DIR}
