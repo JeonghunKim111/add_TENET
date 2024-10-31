@@ -159,7 +159,7 @@ Dataflow::MapSpaceTimeToAccess(string tensor_name, AccessType type)
 * GetUniqueVolume: the size of data required that cannot be find from
 * neighbor in space-time domain
 */
-int
+double
 Dataflow::GetUniqueVolume(
 	string tensor_name,
 	AccessType type,
@@ -184,7 +184,7 @@ Dataflow::GetUniqueVolume(
 * GetTotalVolume: the size of data required in total when no data reuse
 * is considered
 */
-int
+double
 Dataflow::GetTotalVolume(string tensor_name, AccessType type)
 {
 	isl_union_map *access = GetAccess(tensor_name, type);
@@ -197,9 +197,9 @@ double
 Dataflow::GetTemporalReuseVolume(string tensor_name, AccessType type)
 {
 	isl_union_map *stt_prev = MapSpaceTimeToNeighbor(0, false, 1, false, false);
-	int total_volume = GetTotalVolume(tensor_name, type);
-	int unique_volume = GetUniqueVolume(tensor_name, type, stt_prev);
-	int dsize = GetDomainSize();
+	double total_volume = GetTotalVolume(tensor_name, type);
+	double unique_volume = GetUniqueVolume(tensor_name, type, stt_prev);
+	double dsize = GetDomainSize();
 	return (double)(total_volume - unique_volume) / dsize;
 }
 
@@ -217,7 +217,7 @@ Dataflow::GetSpatialReuseVolume(string tensor_name, AccessType type, isl_union_m
 	spatial_reuse_num = isl_union_pw_qpolynomial_sum(spatial_reuse_num); // sum on space
 
 	double number = convert_upwqp_to_int(spatial_reuse_num);
-	int dsize = GetDomainSize();
+	double dsize = GetDomainSize();
 	double res = number / dsize;
 	return res;
 }
@@ -228,77 +228,77 @@ double
 Dataflow::GetReuseFactor(string tensor_name, AccessType type,
 	isl_union_map* space_time_to_neighbor)
 {
-	int unique_volume = GetUniqueVolume(tensor_name, type, space_time_to_neighbor);
-	int total_volume = GetTotalVolume(tensor_name, type);
-	float reuse_factor = (float)total_volume / unique_volume;
+	double unique_volume = GetUniqueVolume(tensor_name, type, space_time_to_neighbor);
+	double total_volume = GetTotalVolume(tensor_name, type);
+	double reuse_factor = total_volume / unique_volume;
 	return reuse_factor;
 }
 
 // this function is used to convert a union piecewise quasi-polynomial function that
 // HAVE A EMPTY DOMAIN (that is, only have a value) to int 
 // upwqp is freed by this function.
-int
+double
 Dataflow::convert_upwqp_to_int(isl_union_pw_qpolynomial *upwqp)
 {
 	isl_printer *p = isl_printer_to_str(isl_union_pw_qpolynomial_get_ctx(upwqp));
 	p = isl_printer_set_output_format(p, ISL_FORMAT_ISL);
 	p = isl_printer_print_union_pw_qpolynomial(p, upwqp);
 	char *s = isl_printer_get_str(p);
-	int ret = atoi(s + 1);
+	double ret = atoi(s + 1);
 	isl_union_pw_qpolynomial_free(upwqp);
 	isl_printer_free(p);
 	return ret;
 }
-int
+double
 Dataflow::GetDomainSize()
 {
 	isl_union_set *domain = _st.GetDomain();
 	isl_union_pw_qpolynomial* domain_size = isl_union_set_card(domain);
-	int dsize = convert_upwqp_to_int(domain_size);
+	double dsize = convert_upwqp_to_int(domain_size);
 	return dsize;
 }
 /* Calculate the number of MACs by calculating number of instances* MACs 
  * per instance
 */
-int
+double
 Dataflow::GetMacNum(int mac_per_instance)
 {
-	int dsize = GetDomainSize();
+	double dsize = GetDomainSize();
 	return dsize * mac_per_instance;
 }
 
-int
+double
 Dataflow::GetTotalTime()
 {
 	isl_union_set *time_domain = GetTimeDomain();
 	isl_union_pw_qpolynomial* domain_size = isl_union_set_card(time_domain);
-	int time_elapse = convert_upwqp_to_int(domain_size);
+	double time_elapse = convert_upwqp_to_int(domain_size);
 	return time_elapse;
 }
-int
+double
 Dataflow::GetPENum()
 {
 	isl_union_set *space_domain = GetSpaceDomain();
 	isl_union_pw_qpolynomial* domain_size = isl_union_set_card(space_domain);
-	int dsize = convert_upwqp_to_int(domain_size);
+	double dsize = convert_upwqp_to_int(domain_size);
 	return dsize;
 }
-int
+double
 Dataflow::GetMacNumPerPE(int mac_per_instance)
 {
-	int mac_num = GetMacNum(mac_per_instance);
+	double mac_num = GetMacNum(mac_per_instance);
 	// use GetSpaceDomain instead of pe.Getdomain() here in case some pes
 	// are idle
-	int dsize = GetPENum();
+	double dsize = GetPENum();
 	return mac_num / dsize;
 }
 
-int
+double
 Dataflow::GetActivePENum()
 {
 	isl_union_set *space_domain = GetSpaceDomain();
 	isl_union_pw_qpolynomial* domain_size = isl_union_set_card(space_domain);
-	int dsize = convert_upwqp_to_int(domain_size);
+	double dsize = convert_upwqp_to_int(domain_size);
 	return dsize;
 }
 
@@ -308,15 +308,15 @@ Dataflow::GetAverageActivePENum()
 {
 	isl_union_set *space_time_domain = GetSpaceTimeDomain();
 	isl_union_pw_qpolynomial* space_time_domain_size = isl_union_set_card(space_time_domain);
-	int stsize = convert_upwqp_to_int(space_time_domain_size);
+	double stsize = convert_upwqp_to_int(space_time_domain_size);
 	isl_union_set *time_domain = GetTimeDomain();
 	isl_union_pw_qpolynomial* time_domain_size = isl_union_set_card(time_domain);
-	int tsize = convert_upwqp_to_int(time_domain_size);
+	double tsize = convert_upwqp_to_int(time_domain_size);
 	double avg_active_pe = (double)stsize / tsize;
 	return avg_active_pe;
 }
 
-int
+double
 Dataflow::GetIngressDelay(isl_union_map* space_time_to_neighbor, string tensor_name)
 {
 	long long ingress_volume =
@@ -324,7 +324,7 @@ Dataflow::GetIngressDelay(isl_union_map* space_time_to_neighbor, string tensor_n
 	return ingress_volume / _pe.GetBandwidth() + _pe.GetAvgLatency() - 1;
 }
 
-int
+double
 Dataflow::GetEgressDelay(isl_union_map* space_time_to_neighbor, string tensor_name)
 {
 	long long egress_volume =
@@ -332,24 +332,24 @@ Dataflow::GetEgressDelay(isl_union_map* space_time_to_neighbor, string tensor_na
 	return egress_volume / _pe.GetBandwidth() + _pe.GetAvgLatency() - 1;
 }
 
-int
+double
 Dataflow::GetComputationDelay()
 {
 	return GetMacNumPerPE();
 }
 
-int
+double
 Dataflow::GetDelay(isl_union_map* space_time_to_neighbor)
 {
 	// int max_delay = 0;
-	int ingress_delay = GetIngressDelay(isl_union_map_copy(space_time_to_neighbor));
-	int egress_delay = GetEgressDelay(space_time_to_neighbor);
-	int compute_delay = GetComputationDelay();
+	double ingress_delay = GetIngressDelay(isl_union_map_copy(space_time_to_neighbor));
+	double egress_delay = GetEgressDelay(space_time_to_neighbor);
+	double compute_delay = GetComputationDelay();
 
 	return max(max(ingress_delay, egress_delay), compute_delay);
 }
 
-int
+double
 Dataflow::GetL1Read(string tensor_name, AccessType type)
 {
 	if (type == AccessType::READ || type == AccessType::WRITE)
@@ -359,7 +359,7 @@ Dataflow::GetL1Read(string tensor_name, AccessType type)
 		return GetTotalVolume(tensor_name, AccessType::READ) + GetTotalVolume(tensor_name, AccessType::WRITE);
 }
 
-int
+double
 Dataflow::GetL1Write(string tensor_name, AccessType type)
 {
 	if (type == AccessType::READ || type == AccessType::WRITE)
@@ -369,7 +369,7 @@ Dataflow::GetL1Write(string tensor_name, AccessType type)
 		return GetTotalVolume(tensor_name, AccessType::READ) + GetTotalVolume(tensor_name, AccessType::WRITE);
 }
 
-int
+double
 Dataflow::GetL2Read(
 	string tensor_name,
 	AccessType type,
@@ -385,7 +385,7 @@ Dataflow::GetL2Read(
 				) + GetUniqueVolume(tensor_name, AccessType::WRITE, space_time_to_neighbor);
 }
 
-int
+double
 Dataflow::GetL2Write(
 	string tensor_name,
 	AccessType type,
@@ -400,10 +400,10 @@ Dataflow::GetL2Write(
 		GetUniqueVolume(tensor_name, AccessType::WRITE, space_time_to_neighbor);
 }
 
-int
+double
 Dataflow::GetEnergy(isl_union_map* space_time_to_neighbor)
 {
-	int energy = GetMacNum();  // energy cost of MAC
+	double energy = GetMacNum();  // energy cost of MAC
 	auto [input, output] = _st.GetTensorList();
 	for (auto& iter : input)
 	{
