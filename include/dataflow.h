@@ -36,7 +36,7 @@ public:
 	double GetReuseFactor(std::string tensor_name, AccessType type,
 		isl_union_map* space_time_to_neighbor);
 	double GetTemporalReuseVolume(std::string tensor_name, AccessType type);
-	double GetSpatialReuseVolume(std::string tensor_name, AccessType type, isl_union_map* stt_neighbor);
+	double GetSpatialReuseVolume(std::string tensor_name, AccessType type, isl_union_map* stt_neighbor, bool is_total = true, int distance = 0);
 	double GetMacNum(int mac_per_instance = 1);
 	double GetMacNumPerPE(int mac_per_instance = 1);
 	double GetActivePENum();

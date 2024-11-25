@@ -9,7 +9,7 @@ using path = filesystem::path;
 
 #define Debug 0
 #define Test_Switch 0
-#define VERBOSE 0 
+#define VERBOSE 1 
 
 void DataflowAnalysis(
 	shared_ptr<ISL_Context> context,
@@ -22,6 +22,9 @@ void DataflowAnalysis(
 	{
 		fprintf(stderr, "Load PE %s failed\n", _pe_file);
 		return;
+	}
+	else{
+	//pe.PrintInfo();
 	}
 	Statement st(context);
 	if (!st.Load(_statement_file))
@@ -38,6 +41,7 @@ void DataflowAnalysis(
 	auto [input, output] = st.GetTensorList();
 	Dataflow df(move(st), move(pe), move(mp)); // st, pe and mp is moved into df, DONT USE THEM AGAIN!
 
+	//df.PrintInfo();
 	isl_union_map *space_time_to_neighbor = df.MapSpaceTimeToNeighbor();
 
 #if VERBOSE
@@ -46,18 +50,36 @@ void DataflowAnalysis(
 		double reuse_factor =
 			df.GetReuseFactor(iter, AccessType::READ, isl_union_map_copy(space_time_to_neighbor));
 		double temporal_reuse = df.GetTemporalReuseVolume(iter, AccessType::READ);
-		double spatial_reuse = df.GetSpatialReuseVolume(iter, AccessType::READ, NULL);
-		fprintf(stdout, "Input Tensor: %s\n Reuse Factor: %.2f\n", iter.c_str(), reuse_factor);
-		fprintf(stdout, " temporal: %f\n spatial: %f\n",temporal_reuse,spatial_reuse);
+		double spatial_reuse_total = df.GetSpatialReuseVolume(iter, AccessType::READ, NULL, true, 0);
+		double spatial_reuse_distance0 = df.GetSpatialReuseVolume(iter, AccessType::READ, NULL, false, 0);
+		double spatial_reuse_distance1 = df.GetSpatialReuseVolume(iter, AccessType::READ, NULL, false, 1);
+		int total_volume = df.GetTotalVolume(iter, AccessType::READ);
+		double domain_size = df.GetDomainSize();
+		fprintf(stdout, "Input Tensor: %s\n Unique volume: %.2f\n", iter.c_str(), total_volume/reuse_factor);
+		fprintf(stdout, " temporal reuse: %f\n spatial reuse total: %f\n spatial reuse_distance0: %f\n spatial reuse_distance1: %f\n",
+			temporal_reuse*domain_size,spatial_reuse_total*domain_size,spatial_reuse_distance0*domain_size,spatial_reuse_distance1*domain_size);
+		///*
+		fprintf(stdout, " Total Volume : %d\n", total_volume);
+		fprintf(stdout, " Domain size : %f\n", domain_size);
+		//*/
 	}
 	for (auto& iter : output)
 	{
 		double reuse_factor =
 			df.GetReuseFactor(iter, AccessType::WRITE, isl_union_map_copy(space_time_to_neighbor));
 		double temporal_reuse = df.GetTemporalReuseVolume(iter, AccessType::WRITE);
-		double spatial_reuse = df.GetSpatialReuseVolume(iter, AccessType::WRITE, NULL);
-		fprintf(stdout, "Output Tensor: %s\n Reuse Factor: %.2f\n", iter.c_str(), reuse_factor);
-		fprintf(stdout, " temporal: %f\n spatial: %f\n",temporal_reuse,spatial_reuse);
+		double spatial_reuse_total = df.GetSpatialReuseVolume(iter, AccessType::WRITE, NULL, true, 0);
+		double spatial_reuse_distance0 = df.GetSpatialReuseVolume(iter, AccessType::WRITE, NULL, false, 0);
+		double spatial_reuse_distance1 = df.GetSpatialReuseVolume(iter, AccessType::WRITE, NULL, false, 1);
+		int total_volume = df.GetTotalVolume(iter, AccessType::WRITE);
+		double domain_size = df.GetDomainSize();
+		fprintf(stdout, "Output Tensor: %s\n Unique volume: %.2f\n", iter.c_str(), total_volume/reuse_factor);
+		fprintf(stdout, " temporal reuse: %f\n spatial reuse total: %f\n spatial reuse_distance0: %f\n spatial reuse_distance1: %f\n",
+			temporal_reuse*domain_size,spatial_reuse_total*domain_size,spatial_reuse_distance0*domain_size,spatial_reuse_distance1*domain_size);
+		///*
+		fprintf(stdout, " Total Volume : %d\n", total_volume);
+		fprintf(stdout, " Domain size : %f\n", domain_size);
+		//*/
 	}
 #endif
 

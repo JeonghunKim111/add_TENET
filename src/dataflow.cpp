@@ -204,10 +204,14 @@ Dataflow::GetTemporalReuseVolume(string tensor_name, AccessType type)
 }
 
 double
-Dataflow::GetSpatialReuseVolume(string tensor_name, AccessType type, isl_union_map *stt_neighbor)
+Dataflow::GetSpatialReuseVolume(string tensor_name, AccessType type, isl_union_map *stt_neighbor, bool is_total, int distance)
 {
-	if (stt_neighbor == NULL)
+	if (stt_neighbor == NULL && is_total == true)
 		stt_neighbor = MapSpaceTimeToNeighbor(1, false, 1, true, false);
+        else if(stt_neighbor == NULL && is_total == false && distance == 0)	
+		stt_neighbor = MapSpaceTimeToNeighbor(1, false, 0, false, false);
+	else if(stt_neighbor == NULL && is_total == false && distance == 1)
+		stt_neighbor = MapSpaceTimeToNeighbor(1, false, 1, false, false);
 	isl_union_map *stt_access = MapSpaceTimeToAccess(tensor_name, type);
 	isl_union_map *neighbor_access = isl_union_map_apply_range(isl_union_map_copy(stt_neighbor), isl_union_map_copy(stt_access));
 	isl_union_map *spatial_reuse = isl_union_map_intersect(stt_access, neighbor_access);
